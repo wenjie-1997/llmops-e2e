@@ -7,6 +7,26 @@ spec:
   selector:
     app: gpt-hf-pod
   ports:
-  - port: 8000 
-    targetPort: 8000
-    nodePort: 30007
+    - port: 8000
+      targetPort: 8000
+      # Don't need node port
+      #nodePort: 30007
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gpt-hf-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    # change the IP address to the external IP of your Ingress Nginx Controller
+    - host: gpt.146.190.184.115.sslip.io
+      http:
+        paths:
+          - backend:
+              service:
+                name: gpt-hf-service
+                port:
+                  number: 8000
+            path: /
+            pathType: Prefix
