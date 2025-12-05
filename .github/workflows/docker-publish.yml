@@ -41,7 +41,8 @@ jobs:
       run: doctl kubernetes cluster kubeconfig save <your-cluster-name>
 
     - name: Update deployment file
-      run: sed -i 's|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest|' deployment.yaml
+      run: |
+        sed -i 's|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest|' deployment.yaml
 
     - name: Deploy to DigitalOcean Kubernetes
       run: kubectl apply -f deployment.yaml -f service.yaml
