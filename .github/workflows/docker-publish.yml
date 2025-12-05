@@ -38,7 +38,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Save Kubeconfig
-        run: doctl kubernetes cluster kubeconfig save <your-cluster-name>
+        run: doctl kubernetes cluster kubeconfig save my-cluster
 
       - name: Install Helm
         run: |
