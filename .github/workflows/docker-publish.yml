@@ -69,7 +69,7 @@ jobs:
 
       - name: Update service.yaml with Ingress IP
         run: |
-          sed -i "s/gpt\..*\.sslip\.io/gpt.${{ steps.get_ip.outputs.external_ip }}.sslip.io/" service.yaml
+          sed -i "s|gpt\..*\.sslip\.io|gpt.${{ steps.get_ip.outputs.external_ip }}.sslip.io|" service.yaml
 
       - name: Update deployment file
         run: |
