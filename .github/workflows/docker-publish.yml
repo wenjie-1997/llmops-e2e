@@ -17,20 +17,20 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      # - uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # - name: Login to Docker Hub
+      #   uses: docker/login-action@v2
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest
+      # - name: Build and push
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -38,7 +38,38 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Save Kubeconfig
-        run: doctl kubernetes cluster kubeconfig save my-cluster
+        run: doctl kubernetes cluster kubeconfig save <your-cluster-name>
+
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Add ingress-nginx Helm repository
+        run: helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+      - name: Update Helm repositories
+        run: helm repo update
+
+      - name: Install ingress-nginx
+        run: helm install ingress-nginx ingress-nginx/ingress-nginx --create-namespace --namespace ingress-nginx
+
+      - name: Get Ingress External IP
+        id: get_ip
+        run: |
+          echo "Waiting for Ingress External IP..."
+          sleep 60
+          EXTERNAL_IP=""
+          while [ -z $EXTERNAL_IP ]; do
+            echo "Waiting for end point..."
+            EXTERNAL_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller --template="{{range .status.loadBalancer.ingress}}{{.ip}}{{end}}")
+            [ -z "$EXTERNAL_IP" ] && sleep 10
+          done
+          echo "End point ready:" && echo $EXTERNAL_IP
+          echo "::set-output name=external_ip::$EXTERNAL_IP"
+
+      - name: Update service.yaml with Ingress IP
+        run: |
+          sed -i "s/gpt\..*\.sslip\.io/gpt.${{ steps.get_ip.outputs.external_ip }}.sslip.io/" service.yaml
 
       - name: Update deployment file
         run: |
