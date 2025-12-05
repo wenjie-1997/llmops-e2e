@@ -9,40 +9,40 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and push
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest
 
-    - name: Install doctl
-      uses: digitalocean/action-doctl@v2
-      with:
-        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-    - name: Save Kubeconfig
-      run: doctl kubernetes cluster kubeconfig save <your-cluster-name>
+      - name: Save Kubeconfig
+        run: doctl kubernetes cluster kubeconfig save my-cluster
 
-    - name: Update deployment file
-      run: |
-        sed -i 's|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest|' deployment.yaml
+      - name: Update deployment file
+        run: |
+          sed -i 's|image: .*|image: ${{ secrets.DOCKERHUB_USERNAME }}/llmops-e2e:latest|' deployment.yaml
 
-    - name: Deploy to DigitalOcean Kubernetes
-      run: kubectl apply -f deployment.yaml -f service.yaml
+      - name: Deploy to DigitalOcean Kubernetes
+        run: kubectl apply -f deployment.yaml -f service.yaml
